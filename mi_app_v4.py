@@ -122,7 +122,7 @@ RESOURCES = [
         "subtitle": "The Feature Breakthrough",
         "tagline": "Explains how Sparse Autoencoders (SAEs) solve the problem of messy neurons.",
         "title": "Towards Monosemanticity: Decomposing Language Models with Dictionary Learning",
-        "author": "Bricken et al., 2024",
+        "author": "Bricken et al., 2023",
         "url": "https://transformer-circuits.pub/2023/monosemantic-features",
         "desc": (
             "Polysemanticity makes it really difficult to reason and account for the behaviour "
@@ -234,7 +234,7 @@ RESOURCES = [
     },
     {
         "id": "neuro", "label": "Neuroscope",
-        "year": 2022, "type": "tool", "color": "#fd79a8",
+        "year": 2023, "type": "tool", "color": "#fd79a8",
         "best_for": "A web-based tool to browse high-activating examples for every neuron in GPT-2.",
         "title": "Neuroscope", "author": "Neel Nanda",
         "url": "https://neuroscope.io/gpt2-medium/index.html",
@@ -284,7 +284,7 @@ RESOURCES = [
     },
     {
         "id": "af", "label": "Alignment Forum",
-        "year": 2015, "type": "community", "color": "#55efc4",
+        "year": 2018, "type": "community", "color": "#55efc4",
         "title": "AI Alignment Forum", "author": "alignmentforum.org",
         "url": "https://www.alignmentforum.org/",
         "desc": (
@@ -308,7 +308,10 @@ EXTRA_LINKS = [
             "This thread only became a thing due to earlier work done on Circuits in Vision Model "
             "InceptionV1, which was also done by Chris Olah (also at Anthropic). This thread "
             "consists of all the developments, starting with the Mathematical Framework in "
-            "Transformer Circuits. Their latest work discusses models explaining themselves."
+            "Transformer Circuits. Their latest work discusses models explaining there own activations "
+            "using this model called as Activation Oracles."
+            "This model allows to see the internal workings of an LLM and check"
+            "if their was any misallignment  involved in the finetuning of the model."
         ),
         "extra_links": [],
     },
@@ -317,7 +320,7 @@ EXTRA_LINKS = [
         "color": "#ffd93d",
         "url":   "https://transformer-circuits.pub/2022/toy_model/index.html",
         "desc": (
-            "It deals with polysemanticity in toy models, which are essentially small scale "
+            "It deals with polysemanticity in toy models, which are essentially smaller in scale "
             "compared to the larger models. A great way to build intuition for superposition "
             "before tackling the full-scale SAE papers."
         ),
@@ -543,66 +546,84 @@ with tab2:
         '<p style="font-size:11px;letter-spacing:2px;color:rgba(255,255,255,0.25);'
         'margin:12px 0 4px;">CLICK ANY MARKER TO READ THE WRITE-UP</p>',
         unsafe_allow_html=True)
-    col_tl,col_tl_panel=st.columns([2,1],gap="medium")
+    col_tl, col_tl_panel = st.columns([2, 1], gap="medium")
 
     with col_tl:
-        sorted_res=sorted(RESOURCES,key=lambda r:r["year"])
-        year_idx={}
-        xs,ys,colors,labels,cdata_tl=[],[],[],[],[]
-        conn_x,conn_y=[],[]
-        for r in sorted_res:
-            idx=year_idx.get(r["year"],0); year_idx[r["year"]]=idx+1
-            side=(1 if idx%2==0 else -1); offset=(idx//2+1)*0.42*side
-            xs.append(offset); ys.append(r["year"])
-            colors.append(r["color"])
-            labels.append(r["label"].replace("\n","<br>"))
-            cdata_tl.append(r["id"])
-            conn_x+=[0,offset,None]; conn_y+=[r["year"],r["year"],None]
+        sorted_res = sorted(RESOURCES, key=lambda r: (r["year"], r["id"]))
+        n = len(sorted_res)
+        year_idx = {}
+        xs, ys, colors, labels, cdata_tl = [], [], [], [], []
+        conn_x, conn_y = [], []
 
-        yr_range=[min(ys)-0.9,max(ys)+0.9]
-        tl_data=[
-            go.Scatter(x=[0,0],y=yr_range,mode="lines",
-                line=dict(color="rgba(255,255,255,0.15)",width=2),
-                hoverinfo="none",showlegend=False),
-            go.Scatter(x=conn_x,y=conn_y,mode="lines",
-                line=dict(color="rgba(255,255,255,0.1)",width=1,dash="dot"),
-                hoverinfo="none",showlegend=False),
+        for i, r in enumerate(sorted_res):
+            idx = year_idx.get(r["year"], 0)
+            year_idx[r["year"]] = idx + 1
+            side = 1 if idx % 2 == 0 else -1
+            offset = (idx // 2 + 1) * 0.85 * side
+            y_pos = i * 1.2
+            xs.append(offset)
+            ys.append(y_pos)
+            colors.append(r["color"])
+            labels.append(r["label"].replace("\n", "<br>"))
+            cdata_tl.append(r["id"])
+            conn_x += [0, offset, None]
+            conn_y += [y_pos, y_pos, None]
+
+        yr_range = [-1, (n - 1) * 1.2 + 1]
+        tl_data = [
+            go.Scatter(x=[0, 0], y=yr_range, mode="lines",
+                line=dict(color="rgba(255,255,255,0.15)", width=2),
+                hoverinfo="none", showlegend=False),
+            go.Scatter(x=conn_x, y=conn_y, mode="lines",
+                line=dict(color="rgba(255,255,255,0.1)", width=1, dash="dot"),
+                hoverinfo="none", showlegend=False),
         ]
-        for rtype,sym in [("paper","circle"),("tool","diamond"),("community","star")]:
-            mask=[i for i,r in enumerate(sorted_res) if r["type"]==rtype]
+        for rtype, sym in [("paper","circle"),("tool","diamond"),("community","star")]:
+            mask = [i for i, r in enumerate(sorted_res) if r["type"] == rtype]
             tl_data.append(go.Scatter(
-                x=[xs[i] for i in mask],y=[ys[i] for i in mask],
+                x=[xs[i] for i in mask], y=[ys[i] for i in mask],
                 mode="markers+text",
                 name=type_emoji[rtype]+" "+rtype.capitalize(),
                 text=[labels[i] for i in mask],
-                textposition=["middle right" if xs[i]>=0 else "middle left" for i in mask],
-                textfont=dict(color="rgba(220,220,220,0.8)",size=10,family="Courier New"),
+                textposition=["middle right" if xs[i] >= 0 else "middle left" for i in mask],
+                textfont=dict(color="rgba(220,220,220,0.8)", size=10, family="Courier New"),
                 customdata=[cdata_tl[i] for i in mask],
                 hovertemplate="<b>%{text}</b><br><i>Click to read write-up</i><extra></extra>",
-                marker=dict(size=14,symbol=sym,
-                    color=[hex_to_rgba(colors[i],0.7) for i in mask],
-                    line=dict(width=2,color=[colors[i] for i in mask]))))
+                marker=dict(size=14, symbol=sym,
+                    color=[hex_to_rgba(colors[i], 0.7) for i in mask],
+                    line=dict(width=2, color=[colors[i] for i in mask]))))
 
-        fig2=go.Figure(data=tl_data)
+        max_offset = max(abs(x) for x in xs) if xs else 1
+        fig2 = go.Figure(data=tl_data)
         fig2.update_layout(
-            **PLOTLY_BASE,height=580,margin=dict(l=10,r=10,t=10,b=10),
-            xaxis=dict(showgrid=False,zeroline=False,showticklabels=False,range=[-1.6,1.6]),
-            yaxis=dict(showgrid=True,gridcolor="rgba(255,255,255,0.05)",
-                zeroline=False,showticklabels=False,range=yr_range),
-            legend=dict(font=dict(color="#aaa",size=10,family="Courier New"),
-                bgcolor="rgba(10,18,32,0.85)",bordercolor="rgba(255,255,255,0.1)",borderwidth=1),
+            **PLOTLY_BASE, height=800, autosize=True,
+            margin=dict(l=20, r=20, t=20, b=20),
+            xaxis=dict(showgrid=False, zeroline=False, showticklabels=False,
+                       range=[-(max_offset + 2.2), max_offset + 2.2]),
+            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False,
+                       range=[-1.5, (n - 1) * 1.2 + 1.5]),
+            legend=dict(font=dict(color="#aaa", size=10, family="Courier New"),
+                bgcolor="rgba(10,18,32,0.85)", bordercolor="rgba(255,255,255,0.1)", borderwidth=1),
             clickmode="event")
-        for yr in sorted(set(ys)):
-            fig2.add_annotation(x=0,y=yr,text="<b>"+str(yr)+"</b>",showarrow=False,
-                font=dict(color="rgba(255,255,255,0.5)",size=10,family="Courier New"),
-                bgcolor="#0a1220",bordercolor="rgba(255,255,255,0.12)",borderpad=4)
 
-        clicked2=st.plotly_chart(fig2,use_container_width=True,
-                                  key="tl_chart",on_select="rerun",selection_mode="points")
+        # Year labels — one per unique year at average y of that year's items
+        year_positions = {}
+        for i, r in enumerate(sorted_res):
+            year_positions.setdefault(r["year"], []).append(ys[i])
+        for yr, positions in year_positions.items():
+            avg_y = sum(positions) / len(positions)
+            fig2.add_annotation(x=0, y=avg_y, text="<b>"+str(yr)+"</b>", showarrow=False,
+                font=dict(color="rgba(255,255,255,0.5)", size=10, family="Courier New"),
+                bgcolor="#0a1220", bordercolor="rgba(255,255,255,0.12)", borderpad=4)
+
+        # Single chart render — outside the loop
+        clicked2 = st.plotly_chart(fig2, use_container_width=True,
+                                   key="tl_chart", on_select="rerun",
+                                   selection_mode="points")
         if clicked2 and clicked2.selection and clicked2.selection.get("points"):
-            pt=clicked2.selection["points"][0]
+            pt = clicked2.selection["points"][0]
             if pt.get("customdata"):
-                st.session_state.selected=pt["customdata"]
+                st.session_state.selected = pt["customdata"]
 
     with col_tl_panel:
         render_panel(st.session_state.selected)
