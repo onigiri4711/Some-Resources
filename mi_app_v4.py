@@ -204,7 +204,7 @@ RESOURCES = [
         "year": 2023, "type": "tool", "color": "#ee5a24",
         "best_for": "High-performance interpretability on massive models (like Llama-3 405B) via remote execution.",
         "title": "nnsight", "author": "NDIF",
-        "url": "https://nnsight.net/walkthroughs/",
+        "url": "https://nnsight.net/tutorials/tutorials/",
         "desc": (
             "It is a library used to interpret as well as manipulate whatever happens inside the "
             "internal states of a model. It directly works with PyTorch and can wrap any model and "
